@@ -1,0 +1,138 @@
+{
+    "type": "object",
+    "properties": {
+      "_sdc_repository": {
+        "type": [
+          "string"
+        ]
+      },
+      "pr_id": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "type": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "lines_added": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "lines_removed": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "status": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "old": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "escaped_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "self": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "new": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "escaped_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "self": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

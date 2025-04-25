@@ -1,0 +1,22 @@
+{
+    "type": "object",
+    "properties": {
+        "_sdc_repository": {
+            "type": [
+              "string"
+            ]
+        },
+        "pr_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+        "file": {
+            "type": [
+              "string",
+              "null"
+            ]
+        }  
+    }
+}

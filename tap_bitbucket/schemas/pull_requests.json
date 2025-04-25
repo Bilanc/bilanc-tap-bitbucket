@@ -1,0 +1,479 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "links": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "self": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "html": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "commits": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "approve": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "diff": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "diffstat": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "comments": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "activity": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "merge": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "decline": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rendered": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "title": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "raw": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "markup": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "html": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "description": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "raw": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "markup": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "html": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "reason": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "raw": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "markup": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "html": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "raw": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "markup": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "html": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "state": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "author": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "destination": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "merge_commit": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "comment_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "task_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "close_source_branch": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "closed_by": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_on": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "updated_on": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewers": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "participants": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "draft": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  }
+}

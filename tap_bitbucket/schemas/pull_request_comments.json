@@ -1,0 +1,279 @@
+{
+    "type": "object",
+    "properties": {
+    "_sdc_repository": {
+        "type": [
+          "string"
+        ]
+      },
+      "id": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "created_on": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "date-time"
+      },
+      "updated_on": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "date-time"
+      },
+      "content": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "raw": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "markup": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "html": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "user": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "self": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              },
+              "avatar": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              },
+              "html": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uuid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "account_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "deleted": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "pending": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "type": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "links": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "self": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "html": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "pullrequest": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "draft": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "self": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              },
+              "html": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+}
