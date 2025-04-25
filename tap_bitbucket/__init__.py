@@ -1167,10 +1167,10 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
         with metrics.record_counter(
             "pull_request_comments"
         ) as pull_request_comments_counter:
-            for state in ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"]:
+            for pr_state in ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"]:
                 for response in authed_get_all_pages(
                     "pull_requests",
-                    f"{BASE_URL}/repositories/{repo_path}/pullrequests?state={state}",
+                    f"{BASE_URL}/repositories/{repo_path}/pullrequests?state={pr_state}",
                 ):
                     pull_requests = response.json()["values"]
                     extraction_time = singer.utils.now()
