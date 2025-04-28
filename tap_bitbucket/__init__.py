@@ -31,7 +31,7 @@ KEY_PROPERTIES = {
     "pull_request_files": ["pr_id"],
     "pull_request_stats": ["pr_id"],
     "pull_request_commits": ["id"],
-    "deployments": ["id"],
+    "deployments": ["key"],
     "organization_members": ["uuid"],
 }
 
@@ -432,31 +432,28 @@ def get_catalog():
     return {"streams": streams}
 
 
-def get_all_repos(organizations: list) -> list:
+def get_all_repos(workspaces: list) -> list:
     """
     Retrieves all repositories for the provided organizations and
         verifies basic access for them.
 
-    Docs: https://docs.github.com/en/rest/reference/repos#list-organization-repositories
     """
     repos = []
 
-    for org_path in organizations:
-        org = org_path.split("/")[0]
+    for worskspace_path in workspaces:
+        workspace = worskspace_path.split("/")[0]
         for response in authed_get_all_pages(
             "get_all_repos",
-            "https://api.github.com/orgs/{}/repos?sort=created&direction=desc".format(
-                org
-            ),
+            f"{BASE_URL}/repositories/{workspace}",
         ):
             org_repos = response.json()
 
-            for repo in org_repos:
+            for repo in org_repos["values"]:
                 repo_full_name = repo.get("full_name")
 
                 logger.info("Verifying access of repository: %s", repo_full_name)
                 verify_repo_access(
-                    "https://api.github.com/repos/{}/commits".format(repo_full_name),
+                    f"{BASE_URL}/repositories/{repo_full_name}/commits",
                     repo,
                 )
 
@@ -822,10 +819,15 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
     return state
 
 
-def get_all_deployments(schema, repo_path, state, mdata, _start_date):
+def get_all_deployments(schema, repo_path, state, mdata, start_date):
     """
     https://docs.github.com/en/rest/deployments/deployments?apiVersion=2022-11-28#list-deployments
     """
+    bookmark_value = get_bookmark(state, repo_path, "deployments", "since", start_date)
+    if bookmark_value:
+        bookmark_time = singer.utils.strptime_to_utc(bookmark_value)
+    else:
+        bookmark_time = 0
 
     with metrics.record_counter("deployments") as counter:
         for response in authed_get_all_pages(
@@ -833,13 +835,25 @@ def get_all_deployments(schema, repo_path, state, mdata, _start_date):
         ):
             deployments = response.json()
             extraction_time = singer.utils.now()
-            for deployment in deployments:
+            for deployment in deployments["values"]:
+                if (
+                    bookmark_time
+                    and singer.utils.strptime_to_utc(deployment.get("created_on"))
+                    < bookmark_time
+                ):
+                    return state
                 deployment["_sdc_repository"] = repo_path
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         deployment, schema, metadata=metadata.to_map(mdata)
                     )
                 singer.write_record("deployments", rec, time_extracted=extraction_time)
+                singer.write_bookmark(
+                    state,
+                    repo_path,
+                    "deployments",
+                    {"since": singer.utils.strftime(extraction_time)},
+                )
                 counter.increment()
 
     return state
@@ -1016,6 +1030,7 @@ def save_config(config):
 SYNC_FUNCTIONS = {
     "pull_requests": get_all_pull_requests,
     "organization_members": get_all_organization_members,
+    "deployments": get_all_deployments,
 }
 
 SUB_STREAMS = {
