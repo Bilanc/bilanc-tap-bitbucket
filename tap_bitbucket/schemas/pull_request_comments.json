@@ -8,7 +8,23 @@
       },
       "id": {
         "type": [
+          "string"
+        ]
+      },
+      "number": {
+        "type": [
+          "integer"
+        ]
+      },
+      "pr_number": {
+        "type": [
           "integer",
+          "null"
+        ]
+      },
+      "pr_id": {
+        "type": [
+          "string",
           "null"
         ]
       },

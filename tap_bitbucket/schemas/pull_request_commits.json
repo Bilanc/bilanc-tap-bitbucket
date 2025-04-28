@@ -11,6 +11,16 @@
       "type": "string",
       "format": "date-time"
     },
+    "pr_number": {
+      "type": [
+        "integer"
+      ]
+    },
+    "pr_id": {
+      "type": [
+        "string"
+      ]
+    },
     "author": {
       "type": "object",
       "properties": {

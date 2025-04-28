@@ -8,8 +8,12 @@
         },
         "pr_id": {
             "type": [
-              "string",
-              "null"
+              "string"
+            ]
+          },
+          "pr_number": {
+            "type": [
+              "integer"
             ]
           },
         "file": {
