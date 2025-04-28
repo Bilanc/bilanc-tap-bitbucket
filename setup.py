@@ -24,6 +24,6 @@ setup(
           tap-bitbucket=tap_bitbucket:main
       """,
     packages=["tap_bitbucket"],
-    package_data={"tap_bitbucket": ["tap_bitbucket/schemas/*.json"]},
+    package_data={"tap_bitbucket": ["schemas/*.json"]},
     include_package_data=True,
 )
