@@ -1088,7 +1088,7 @@ def do_sync(config, state, catalog):
                 if not sub_stream_ids:
                     if stream_id == "organization_members":
                         state = sync_func(
-                            stream_schemas, workspace, state, mdata, start_date
+                            stream_schema, workspace, state, mdata, start_date
                         )
                     else:
                         state = sync_func(stream_schema, repo, state, mdata, start_date)
@@ -1110,11 +1110,6 @@ def do_sync(config, state, catalog):
                                 sub_stream["key_properties"],
                             )
                     # sync stream and it's sub streams
-                    if stream_id == "organization_members":
-                        state = sync_func(
-                            stream_schemas, workspace, state, stream_mdata, start_date
-                        )
-                    else:
                         state = sync_func(
                             stream_schemas, repo, state, stream_mdata, start_date
                         )
