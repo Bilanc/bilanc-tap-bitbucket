@@ -1036,7 +1036,6 @@ SYNC_FUNCTIONS = {
 SUB_STREAMS = {
     "pull_requests": [
         "pull_request_comments",
-        "review_comments",
         "pull_request_stats",
         "pull_request_details",
         "pull_request_files",
@@ -1110,9 +1109,9 @@ def do_sync(config, state, catalog):
                                 sub_stream["key_properties"],
                             )
                     # sync stream and it's sub streams
-                        state = sync_func(
-                            stream_schemas, repo, state, stream_mdata, start_date
-                        )
+                    state = sync_func(
+                        stream_schemas, repo, state, stream_mdata, start_date
+                    )
 
                 singer.write_state(state)
 
