@@ -29,7 +29,7 @@ KEY_PROPERTIES = {
     "pull_requests": ["id"],
     "pull_request_comments": ["id"],
     "pull_request_files": ["pr_id"],
-    "pull_request_stats": ["pr_id"],
+    "pull_request_stats": ["id"],
     "pull_request_commits": ["id"],
     "pull_request_details": ["id"],
     "deployments": ["key"],
@@ -778,7 +778,9 @@ def get_pull_request_stats(pr_id, pr_number, schema, repo_path, state, mdata):
         f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/diffstat",
     ):
         stats = response.json()
-        for stat in stats["values"]:
+        for index, stat in enumerate(stats["values"]):
+            stat["id"] = "{}-{}".format(pr_id, index)
+            stat["changed_files"] = len(stats["values"])
             stat["pr_id"] = pr_id
             stat["pr_number"] = pr_number
             stat["_sdc_repository"] = repo_path

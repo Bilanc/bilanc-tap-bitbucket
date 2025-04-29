@@ -1,6 +1,9 @@
 {
     "type": "object",
     "properties": {
+      "id": {
+        "type": "string"
+      },
       "_sdc_repository": {
         "type": [
           "string"
@@ -14,6 +17,12 @@
       "pr_id": {
         "type": [
           "string"
+        ]
+      },
+      "changed_files": {
+        "type": [
+          "integer",
+          "null"
         ]
       },
       "type": {
