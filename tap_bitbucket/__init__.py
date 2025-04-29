@@ -33,6 +33,7 @@ KEY_PROPERTIES = {
     "pull_request_commits": ["id"],
     "pull_request_details": ["id"],
     "deployments": ["key"],
+    "deployment_environments": ["uuid"],
     "organization_members": ["uuid"],
 }
 
@@ -864,9 +865,6 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
 
 
 def get_all_deployments(schema, repo_path, state, mdata, start_date):
-    """
-    https://docs.github.com/en/rest/deployments/deployments?apiVersion=2022-11-28#list-deployments
-    """
     bookmark_value = get_bookmark(state, repo_path, "deployments", "since", start_date)
     if bookmark_value:
         bookmark_time = singer.utils.strptime_to_utc(bookmark_value)
@@ -901,6 +899,32 @@ def get_all_deployments(schema, repo_path, state, mdata, start_date):
                 counter.increment()
 
     return state
+
+
+def get_all_deployment_environments(schema, repo_path, state, mdata, _start_date):
+    with metrics.record_counter("deployment_environments") as counter:
+        for response in authed_get_all_pages(
+            "deployment_environments", f"{BASE_URL}/repositories/{repo_path}/environments"
+        ):
+            deployment_environments = response.json()
+            extraction_time = singer.utils.now()
+            for deployment_environment in deployment_environments["values"]:
+                deployment_environment["_sdc_repository"] = repo_path
+                with singer.Transformer() as transformer:
+                    rec = transformer.transform(
+                        deployment_environment, schema, metadata=metadata.to_map(mdata)
+                    )
+                singer.write_record("deployment_environments", rec, time_extracted=extraction_time)
+                singer.write_bookmark(
+                    state,
+                    repo_path,
+                    "deployment_environments",
+                    {"since": singer.utils.strftime(extraction_time)},
+                )
+                counter.increment()
+
+    return state
+
 
 
 def get_all_organization_members(schemas, workspace, state, mdata, _start_date):
@@ -1075,6 +1099,7 @@ SYNC_FUNCTIONS = {
     "pull_requests": get_all_pull_requests,
     "organization_members": get_all_organization_members,
     "deployments": get_all_deployments,
+    "deployment_environments": get_all_deployment_environments,
 }
 
 SUB_STREAMS = {

@@ -1,0 +1,133 @@
+{
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "name": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "slug": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "rank": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "environment_type": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rank": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "deployment_gate_enabled": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "lock": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "restrictions": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "admin_only": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "hidden": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "environment_lock_enabled": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "uuid": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "category": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+}
