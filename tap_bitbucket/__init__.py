@@ -585,10 +585,10 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                     ):
                         return state
 
-                    pr_id = pr.get("id")
-                    pr_number = pr_id
+                    pr_number = pr.get("id")
                     pr["pr_number"] = pr_number
-                    pr["id"] = "{}-{}".format(repo_path, pr_id)
+                    pr["id"] = "{}-{}".format(repo_path, pr_number)
+                    pr_id = pr["id"]
                     pr["_sdc_repository"] = repo_path
 
                     # transform and write pull_request record
