@@ -1,0 +1,971 @@
+{
+    "type": "object",
+    "properties": {
+    "_sdc_repository": {
+        "type": "string"
+      },
+      "pr_number": {
+        "type": "integer"
+      },
+      "comment_count": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "task_count": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "type": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "id": {
+        "type": "string"
+      },
+      "title": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "rendered": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "title": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "raw": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "markup": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "html": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "description": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "raw": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "markup": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "html": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "state": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "draft": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "merge_commit": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "close_source_branch": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "closed_by": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "author": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "self": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              },
+              "avatar": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              },
+              "html": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uuid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "account_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "reason": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "created_on": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "date-time"
+      },
+      "updated_on": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "date-time"
+      },
+      "destination": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "branch": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "commit": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "links": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "self": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  },
+                  "html": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                }
+              },
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "repository": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "full_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "links": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "self": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  },
+                  "html": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  },
+                  "avatar": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                }
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "uuid": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "source": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "branch": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "links": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "sync_strategies": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "commit": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "hash": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "links": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "self": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  },
+                  "html": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                }
+              },
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "repository": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "full_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "links": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "self": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  },
+                  "html": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  },
+                  "avatar": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "href": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri"
+                      }
+                    }
+                  }
+                }
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "uuid": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "reviewers": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": [
+            "object",
+            "string",
+            "null"
+          ]
+        }
+      },
+      "participants": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "user": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "display_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "links": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "self": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "href": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uri"
+                        }
+                      }
+                    },
+                    "avatar": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "href": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uri"
+                        }
+                      }
+                    },
+                    "html": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "href": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "uri"
+                        }
+                      }
+                    }
+                  }
+                },
+                "type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "uuid": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "account_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nickname": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "role": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "approved": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "state": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "participated_on": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            }
+          }
+        }
+      },
+      "links": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "self": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "html": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "commits": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "approve": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "request-changes": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "diff": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "diffstat": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "comments": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "activity": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "merge": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "decline": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          },
+          "statuses": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "href": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "summary": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "raw": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "markup": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "html": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }

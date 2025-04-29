@@ -31,6 +31,7 @@ KEY_PROPERTIES = {
     "pull_request_files": ["pr_id"],
     "pull_request_stats": ["pr_id"],
     "pull_request_commits": ["id"],
+    "pull_request_details": ["id"],
     "deployments": ["key"],
     "organization_members": ["uuid"],
 }
@@ -564,7 +565,9 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
         "pull_request_comments"
     ) as pull_request_comments_counter, metrics.record_counter(
         "pull_request_stats"
-    ) as pull_request_stats_counter:
+    ) as pull_request_stats_counter, metrics.record_counter(
+        "pull_request_details"
+    ) as pull_request_details_counter:
         for pr_state in ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"]:
             for response in authed_get_all_pages(
                 "pull_requests",
@@ -704,6 +707,28 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                             )
                             pull_request_stats_counter.increment()
 
+                    if schemas.get("pull_request_details"):
+                        for pull_request_stats in get_pull_request_details(
+                            pr_id,
+                            pr_number,
+                            schemas["pull_request_details"],
+                            repo_path,
+                            state,
+                            mdata["pull_request_details"],
+                        ):
+                            singer.write_record(
+                                "pull_request_details",
+                                pull_request_stats,
+                                time_extracted=extraction_time,
+                            )
+                            singer.write_bookmark(
+                                state,
+                                repo_path,
+                                "pull_request_details",
+                                {"since": singer.utils.strftime(extraction_time)},
+                            )
+                            pull_request_details_counter.increment()
+
     return state
 
 
@@ -769,7 +794,7 @@ def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
     logger.info("Starting to process files for PR %s", pr_id)
     for response in authed_get_all_pages(
         "pull_request_files",
-        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_id}/patch",
+        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/patch",
     ):
         file = {}
         file["file"] = str(response.content).replace('"', "'")
@@ -783,6 +808,23 @@ def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
         yield rec
 
     return state
+
+
+def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
+    for response in authed_get_all_pages(
+        "pull_request_details",
+        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}",
+    ):
+        details = response.json()
+        details["id"] = pr_id
+        details["pr_number"] = pr_number
+        details["_sdc_repository"] = repo_path
+        with singer.Transformer() as transformer:
+            rec = transformer.transform(
+                details, schema, metadata=metadata.to_map(mdata)
+            )
+            yield rec
+        return state
 
 
 def get_all_commits(schema, repo_path, state, mdata, start_date):
@@ -1040,6 +1082,7 @@ SUB_STREAMS = {
         "pull_request_details",
         "pull_request_files",
         "pull_request_commits",
+        "pull_request_details",
     ],
 }
 
