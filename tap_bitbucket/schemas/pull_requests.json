@@ -57,7 +57,7 @@
     "merge_commit": {
       "type": [
         "null",
-        "null"
+        "string"
       ]
     },
     "close_source_branch": {
@@ -69,7 +69,7 @@
     "closed_by": {
       "type": [
         "null",
-        "null"
+        "string"
       ]
     },
     "author": {
