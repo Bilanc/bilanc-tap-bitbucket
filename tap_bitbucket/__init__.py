@@ -882,7 +882,7 @@ def get_all_deployments(schema, repo_path, state, mdata, start_date):
             for deployment in deployments["values"]:
                 if (
                     bookmark_time
-                    and singer.utils.strptime_to_utc(deployment.get("created_on"))
+                    and singer.utils.strptime_to_utc(deployment.get("last_update_time"))
                     < bookmark_time
                 ):
                     return state
