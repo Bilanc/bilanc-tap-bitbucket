@@ -880,7 +880,9 @@ def get_all_deployments(schema, repo_path, state, mdata, start_date):
             for deployment in deployments["values"]:
                 if (
                     bookmark_time
-                    and singer.utils.strptime_to_utc(deployment.get("last_update_time"))
+                    and singer.utils.strptime_to_utc(
+                        deployment.get("last_update_time", deployment.get("created_on"))
+                    )
                     < bookmark_time
                 ):
                     return state
@@ -904,7 +906,8 @@ def get_all_deployments(schema, repo_path, state, mdata, start_date):
 def get_all_deployment_environments(schema, repo_path, state, mdata, _start_date):
     with metrics.record_counter("deployment_environments") as counter:
         for response in authed_get_all_pages(
-            "deployment_environments", f"{BASE_URL}/repositories/{repo_path}/environments"
+            "deployment_environments",
+            f"{BASE_URL}/repositories/{repo_path}/environments",
         ):
             deployment_environments = response.json()
             extraction_time = singer.utils.now()
@@ -914,7 +917,9 @@ def get_all_deployment_environments(schema, repo_path, state, mdata, _start_date
                     rec = transformer.transform(
                         deployment_environment, schema, metadata=metadata.to_map(mdata)
                     )
-                singer.write_record("deployment_environments", rec, time_extracted=extraction_time)
+                singer.write_record(
+                    "deployment_environments", rec, time_extracted=extraction_time
+                )
                 singer.write_bookmark(
                     state,
                     repo_path,
@@ -924,7 +929,6 @@ def get_all_deployment_environments(schema, repo_path, state, mdata, _start_date
                 counter.increment()
 
     return state
-
 
 
 def get_all_organization_members(schemas, workspace, state, mdata, _start_date):
