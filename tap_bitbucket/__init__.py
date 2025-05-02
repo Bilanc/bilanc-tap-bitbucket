@@ -5,14 +5,12 @@ import time
 import requests
 import backoff
 import singer
-import jwt
 import math
 import argparse
 from datetime import datetime, timedelta
 import pytz
 from singer import bookmarks, metrics, metadata
 from simplejson import JSONDecodeError
-import base64
 
 session = requests.Session()
 logger = singer.get_logger()
@@ -40,51 +38,51 @@ KEY_PROPERTIES = {
 VISITED_ORGS_IDS = set()
 
 
-class GithubException(Exception):
+class BitbucketException(Exception):
     pass
 
 
-class BadCredentialsException(GithubException):
+class BadCredentialsException(BitbucketException):
     pass
 
 
-class AuthException(GithubException):
+class AuthException(BitbucketException):
     pass
 
 
-class NotFoundException(GithubException):
+class NotFoundException(BitbucketException):
     pass
 
 
-class BadRequestException(GithubException):
+class BadRequestException(BitbucketException):
     pass
 
 
-class InternalServerError(GithubException):
+class InternalServerError(BitbucketException):
     pass
 
 
-class UnprocessableError(GithubException):
+class UnprocessableError(BitbucketException):
     pass
 
 
-class NotModifiedError(GithubException):
+class NotModifiedError(BitbucketException):
     pass
 
 
-class MovedPermanentlyError(GithubException):
+class MovedPermanentlyError(BitbucketException):
     pass
 
 
-class ConflictError(GithubException):
+class ConflictError(BitbucketException):
     pass
 
 
-class APIRateLimitExceededError(GithubException):
+class APIRateLimitExceededError(BitbucketException):
     pass
 
 
-class RetriableServerError(GithubException):
+class RetriableServerError(BitbucketException):
     pass
 
 
@@ -123,7 +121,7 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     },
     500: {
         "raise_exception": InternalServerError,
-        "message": "An error has occurred at Github's end.",
+        "message": "An error has occurred at Bitbucket's end.",
     },
     502: {"raise_exception": RetriableServerError, "message": "Server Error"},
 }
@@ -202,8 +200,8 @@ def raise_for_error(resp, source):
         details = ERROR_CODE_EXCEPTION_MAPPING.get(error_code).get("message")
         if source == "teams":
             details += " or it is a personal account repository"
-        message = "HTTP-error-code: 404, Error: {}. Please refer '{}' for more details.".format(
-            details, response_json.get("documentation_url")
+        message = "HTTP-error-code: 404, Error: {}. {}".format(
+            details, response_json.get("error", {}).get("message", "")
         )
         logger.info(message)
         # don't raise a NotFoundException
@@ -232,7 +230,7 @@ def raise_for_error(resp, source):
     )
 
     exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get(
-        "raise_exception", GithubException
+        "raise_exception", BitbucketException
     )
     raise exc(message) from None
 
@@ -256,13 +254,6 @@ def refresh_token_if_expired():
         refresh_token_expires_at
         and refresh_token_expires_at < datetime.now(pytz.UTC).isoformat()
     )
-
-    if stale_access_token or stale_refresh_token:
-        # Pull config
-        with open(config_path, "r") as f:
-            config = json.load(f)
-
-        refresh_oauth_token(config)
 
 
 # pylint: disable=dangerous-default-value
@@ -480,14 +471,7 @@ def verify_repo_access(url_for_repo, repo):
 def verify_access_for_repo(config):
 
     access_token = config["access_token"]
-    if config["is_jwt_token"]:
-        session.headers.update(
-            {"authorization": "token " + access_token, "per_page": "1", "page": "1"}
-        )
-    else:
-        session.headers.update(
-            {"Authorization": "Bearer " + access_token, "per_page": "1", "page": "1"}
-        )
+    session.headers.update({"Authorization": "Bearer " + access_token})
 
     repositories = extract_repos_from_config(config)
 
@@ -509,7 +493,7 @@ def do_discover(config):
 
 def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
     """
-    https://developer.github.com/v3/pulls/#list-pull-requests
+    Retrieves all pull requests from the Bitbucket API
     """
 
     bookmark_value = get_bookmark(
@@ -543,7 +527,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                 for pr in pull_requests:
 
                     # skip records that haven't been updated since the last run
-                    # the GitHub API doesn't currently allow a ?since param for pulls
+                    # the Bitbucket API doesn't currently allow a ?since param for pulls
                     # once we find the first piece of old data we can return, thanks to
                     # the sorting
                     if (
@@ -709,11 +693,13 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                     f"Error fetching commits for PR {pr_number} in {repo_path}: {commit_data['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             if "values" not in commit_data:
-                logger.warning(f"No commit data found for PR {pr_number} in {repo_path}")
+                logger.warning(
+                    f"No commit data found for PR {pr_number} in {repo_path}"
+                )
                 return state
-                
+
             for commit in commit_data["values"]:
                 commit["_sdc_repository"] = repo_path
                 commit["pr_number"] = pr_number
@@ -727,7 +713,9 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
 
             return state
     except Exception as e:
-        logger.exception(f"Failed to process commits for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process commits for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -738,17 +726,19 @@ def get_comments_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
             f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/comments",
         ):
             comments = response.json()
-            
+
             if "error" in comments:
                 logger.warning(
                     f"Error fetching comments for PR {pr_number} in {repo_path}: {comments['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             if "values" not in comments:
-                logger.warning(f"No comments data found for PR {pr_number} in {repo_path}")
+                logger.warning(
+                    f"No comments data found for PR {pr_number} in {repo_path}"
+                )
                 return state
-                
+
             for comment in comments["values"]:
                 comment["_sdc_repository"] = repo_path
                 comment["pr_id"] = pr_id
@@ -762,7 +752,9 @@ def get_comments_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                 yield rec
             return state
     except Exception as e:
-        logger.exception(f"Failed to process comments for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process comments for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -773,17 +765,19 @@ def get_pull_request_stats(pr_id, pr_number, schema, repo_path, state, mdata):
             f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/diffstat",
         ):
             stats = response.json()
-            
+
             if "error" in stats:
                 logger.warning(
                     f"Error fetching diffstat for PR {pr_number} in {repo_path}: {stats['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             if "values" not in stats:
-                logger.warning(f"No diffstat data found for PR {pr_number} in {repo_path}")
+                logger.warning(
+                    f"No diffstat data found for PR {pr_number} in {repo_path}"
+                )
                 return state
-                
+
             for index, stat in enumerate(stats["values"]):
                 stat["id"] = "{}-{}".format(pr_id, index)
                 stat["changed_files"] = len(stats["values"])
@@ -797,7 +791,9 @@ def get_pull_request_stats(pr_id, pr_number, schema, repo_path, state, mdata):
                 yield rec
             return state
     except Exception as e:
-        logger.exception(f"Failed to process diffstat for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process diffstat for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -813,30 +809,34 @@ def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
                     f"Error fetching patch for PR {pr_number} in {repo_path}: status code {response.status_code}"
                 )
                 return state
-                
+
             content = str(response.content)
             if '"type": "error"' in content or '"error":' in content:
                 logger.warning(
                     f"Error in patch response for PR {pr_number} in {repo_path}: {content}"
                 )
                 return state
-                
+
             if not response.content:
                 logger.warning(f"Empty patch content for PR {pr_number} in {repo_path}")
                 return state
-                
+
             file = {}
             file["file"] = content.replace('"', "'")
             file["_sdc_repository"] = repo_path
             file["pr_id"] = pr_id
             file["pr_number"] = pr_number
             with singer.Transformer() as transformer:
-                rec = transformer.transform(file, schema, metadata=metadata.to_map(mdata))
+                rec = transformer.transform(
+                    file, schema, metadata=metadata.to_map(mdata)
+                )
             yield rec
 
         return state
     except Exception as e:
-        logger.exception(f"Failed to process files for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process files for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -847,13 +847,13 @@ def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
             f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}",
         ):
             details = response.json()
-            
+
             if "error" in details:
                 logger.warning(
                     f"Error fetching details for PR {pr_number} in {repo_path}: {details['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             details["id"] = pr_id
             details["pr_number"] = pr_number
             details["_sdc_repository"] = repo_path
@@ -864,13 +864,15 @@ def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
                 yield rec
             return state
     except Exception as e:
-        logger.exception(f"Failed to process details for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process details for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
 def get_all_commits(schema, repo_path, state, mdata, start_date):
     """
-    https://developer.github.com/v3/repos/commits/#list-commits-on-a-repository
+    Retrieves all commits from the Bitbucket API
     """
     bookmark = get_bookmark(state, repo_path, "commits", "since", start_date)
     if bookmark:
@@ -1035,93 +1037,6 @@ def get_request_timeout():
     return REQUEST_TIMEOUT
 
 
-def get_jwt_token(config):
-    # Get app token
-    private_key = config["private_key"]
-    app_id = config["app_id"]
-
-    now = int(datetime.now().timestamp())
-
-    payload = {"iat": now - 60, "exp": now + (10 * 60), "iss": app_id}
-
-    jwt_token = jwt.encode(payload, private_key, algorithm="RS256")
-
-    # Get client token
-    inst_id = config["installation_id"]
-    url = f"https://api.github.com/app/installations/{inst_id}/access_tokens"
-
-    header = {
-        "Accept": "application/vnd.github+json",
-        "Authorization": f"Bearer {jwt_token}",
-    }
-
-    response = requests.post(url, headers=header)
-    token = response.json()["token"]
-
-    return token
-
-
-def refresh_oauth_token(config):
-    """
-    Refreshes the OAuth access token using the refresh token
-    and updates the config file with the new tokens.
-
-    Args:
-        config (dict): The current configuration with refresh_token
-
-    Returns:
-        dict: Updated config with new access_token and refresh_token
-    """
-    global access_token_expires_at
-    global refresh_token_expires_at
-    if "refresh_token" not in config:
-        logger.error("No refresh token found in config, cannot refresh access token")
-        raise BadCredentialsException("No refresh token found in config")
-
-    logger.info("Refreshing OAuth access token")
-
-    token_url = "https://github.com/login/oauth/access_token"
-
-    data = {
-        "client_id": config["client_id"],
-        "client_secret": config["client_secret"],
-        "refresh_token": config["refresh_token"],
-        "grant_type": "refresh_token",
-    }
-
-    headers = {"Accept": "application/json"}
-
-    try:
-        response = requests.post(token_url, data=data, headers=headers)
-        response.raise_for_status()
-        token_data = response.json()
-
-        config["access_token"] = token_data["access_token"]
-        now = datetime.now(pytz.UTC)
-        if "expires_in" in token_data:
-            config["access_token_expires_at"] = (
-                now + timedelta(seconds=token_data["expires_in"] - 60)
-            ).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-            access_token_expires_at = config["access_token_expires_at"]
-        if "refresh_token_expires_in" in token_data:
-            config["refresh_token_expires_at"] = (
-                now + timedelta(seconds=token_data["refresh_token_expires_in"] - 60)
-            ).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-            refresh_token_expires_at = config["refresh_token_expires_at"]
-        if "refresh_token" in token_data:
-            config["refresh_token"] = token_data["refresh_token"]
-        save_config(config)
-
-        session.headers["Authorization"] = "Bearer " + config["access_token"]
-
-        logger.info("Successfully refreshed OAuth access token")
-        return config
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to refresh OAuth token: {str(e)}")
-        raise BadCredentialsException(f"Failed to refresh OAuth token: {str(e)}")
-
-
 def save_config(config):
     """
     Saves the updated config back to the config file.
@@ -1158,10 +1073,8 @@ SUB_STREAMS = {
 
 def do_sync(config, state, catalog):
     access_token = config["access_token"]
-    if config["is_jwt_token"]:
-        session.headers.update({"authorization": "token " + access_token})
-    else:
-        session.headers.update({"Authorization": "Bearer " + access_token})
+    # Bitbucket only uses Bearer token authentication
+    session.headers.update({"Authorization": "Bearer " + access_token})
 
     start_date = config["start_date"] if "start_date" in config else None
     # get selected streams, make sure stream dependencies are met
@@ -1248,23 +1161,9 @@ def main():
     refresh_token_expires_at = args.config.get("refresh_token_expires_at")
 
     if not args.config.get("access_token"):
-        if (
-            "app_id" in args.config
-            and "private_key" in args.config
-            and "installation_id" in args.config
-        ):
-            args.config["access_token"] = get_jwt_token(args.config)
-            args.config["is_jwt_token"] = True
-        elif (
-            "refresh_token" in args.config
-            and "client_id" in args.config
-            and "client_secret" in args.config
-        ):
-            args.config = refresh_oauth_token(args.config)
-        else:
-            raise BadCredentialsException(
-                "No valid authentication method provided. Either provide an access_token, or app credentials, or OAuth credentials with refresh token."
-            )
+        raise BadCredentialsException(
+            "No valid authentication method provided. Either provide an access_token or OAuth credentials with refresh token."
+        )
 
     if args.discover:
         do_discover(args.config)

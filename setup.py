@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 setup(
     name="tap-bitbucket",
     version="1.10.5",
-    description="Singer.io tap for extracting data from the GitHub API",
+    description="Singer.io tap for extracting data from the Bitbucket API",
     author="Stitch",
     url="http://singer.io",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
