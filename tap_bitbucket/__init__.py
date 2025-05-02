@@ -768,79 +768,139 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
 
 
 def get_comments_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
-    for response in authed_get_all_pages(
-        "pull_request_comments",
-        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/comments",
-    ):
-        comments = response.json()
-        for comment in comments["values"]:
-            comment["_sdc_repository"] = repo_path
-            comment["pr_id"] = pr_id
-            comment["pr_number"] = pr_number
-            comment["number"] = comment["id"]
-            comment["id"] = "{}-{}".format(pr_id, comment["id"])
-            with singer.Transformer() as transformer:
-                rec = transformer.transform(
-                    comment, schema, metadata=metadata.to_map(mdata)
+    try:
+        for response in authed_get_all_pages(
+            "pull_request_comments",
+            f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/comments",
+        ):
+            comments = response.json()
+            
+            if "error" in comments:
+                logger.warning(
+                    f"Error fetching comments for PR {pr_number} in {repo_path}: {comments['error'].get('message', 'Unknown error')}"
                 )
-            yield rec
+                return state
+                
+            if "values" not in comments:
+                logger.warning(f"No comments data found for PR {pr_number} in {repo_path}")
+                return state
+                
+            for comment in comments["values"]:
+                comment["_sdc_repository"] = repo_path
+                comment["pr_id"] = pr_id
+                comment["pr_number"] = pr_number
+                comment["number"] = comment["id"]
+                comment["id"] = "{}-{}".format(pr_id, comment["id"])
+                with singer.Transformer() as transformer:
+                    rec = transformer.transform(
+                        comment, schema, metadata=metadata.to_map(mdata)
+                    )
+                yield rec
+            return state
+    except Exception as e:
+        logger.exception(f"Failed to process comments for PR {pr_number} in {repo_path}: {str(e)}")
         return state
 
 
 def get_pull_request_stats(pr_id, pr_number, schema, repo_path, state, mdata):
-    for response in authed_get_all_pages(
-        "pull_request_stats",
-        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/diffstat",
-    ):
-        stats = response.json()
-        for index, stat in enumerate(stats["values"]):
-            stat["id"] = "{}-{}".format(pr_id, index)
-            stat["changed_files"] = len(stats["values"])
-            stat["pr_id"] = pr_id
-            stat["pr_number"] = pr_number
-            stat["_sdc_repository"] = repo_path
-            with singer.Transformer() as transformer:
-                rec = transformer.transform(
-                    stat, schema, metadata=metadata.to_map(mdata)
+    try:
+        for response in authed_get_all_pages(
+            "pull_request_stats",
+            f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/diffstat",
+        ):
+            stats = response.json()
+            
+            if "error" in stats:
+                logger.warning(
+                    f"Error fetching diffstat for PR {pr_number} in {repo_path}: {stats['error'].get('message', 'Unknown error')}"
                 )
-            yield rec
+                return state
+                
+            if "values" not in stats:
+                logger.warning(f"No diffstat data found for PR {pr_number} in {repo_path}")
+                return state
+                
+            for index, stat in enumerate(stats["values"]):
+                stat["id"] = "{}-{}".format(pr_id, index)
+                stat["changed_files"] = len(stats["values"])
+                stat["pr_id"] = pr_id
+                stat["pr_number"] = pr_number
+                stat["_sdc_repository"] = repo_path
+                with singer.Transformer() as transformer:
+                    rec = transformer.transform(
+                        stat, schema, metadata=metadata.to_map(mdata)
+                    )
+                yield rec
+            return state
+    except Exception as e:
+        logger.exception(f"Failed to process diffstat for PR {pr_number} in {repo_path}: {str(e)}")
         return state
 
 
 def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
-    logger.info("Starting to process files for PR %s", pr_id)
-    for response in authed_get_all_pages(
-        "pull_request_files",
-        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/patch",
-    ):
-        file = {}
-        file["file"] = str(response.content).replace('"', "'")
-        if not response.content:
-            return state
-        file["_sdc_repository"] = repo_path
-        file["pr_id"] = pr_id
-        file["pr_number"] = pr_number
-        with singer.Transformer() as transformer:
-            rec = transformer.transform(file, schema, metadata=metadata.to_map(mdata))
-        yield rec
+    try:
+        logger.info("Starting to process files for PR %s", pr_id)
+        for response in authed_get_all_pages(
+            "pull_request_files",
+            f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/patch",
+        ):
+            if response.status_code != 200:
+                logger.warning(
+                    f"Error fetching patch for PR {pr_number} in {repo_path}: status code {response.status_code}"
+                )
+                return state
+                
+            content = str(response.content)
+            if '"type": "error"' in content or '"error":' in content:
+                logger.warning(
+                    f"Error in patch response for PR {pr_number} in {repo_path}: {content}"
+                )
+                return state
+                
+            if not response.content:
+                logger.warning(f"Empty patch content for PR {pr_number} in {repo_path}")
+                return state
+                
+            file = {}
+            file["file"] = content.replace('"', "'")
+            file["_sdc_repository"] = repo_path
+            file["pr_id"] = pr_id
+            file["pr_number"] = pr_number
+            with singer.Transformer() as transformer:
+                rec = transformer.transform(file, schema, metadata=metadata.to_map(mdata))
+            yield rec
 
-    return state
+        return state
+    except Exception as e:
+        logger.exception(f"Failed to process files for PR {pr_number} in {repo_path}: {str(e)}")
+        return state
 
 
 def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
-    for response in authed_get_all_pages(
-        "pull_request_details",
-        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}",
-    ):
-        details = response.json()
-        details["id"] = pr_id
-        details["pr_number"] = pr_number
-        details["_sdc_repository"] = repo_path
-        with singer.Transformer() as transformer:
-            rec = transformer.transform(
-                details, schema, metadata=metadata.to_map(mdata)
-            )
-            yield rec
+    try:
+        for response in authed_get_all_pages(
+            "pull_request_details",
+            f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}",
+        ):
+            details = response.json()
+            
+            if "error" in details:
+                logger.warning(
+                    f"Error fetching details for PR {pr_number} in {repo_path}: {details['error'].get('message', 'Unknown error')}"
+                )
+                return state
+                
+            details["id"] = pr_id
+            details["pr_number"] = pr_number
+            details["_sdc_repository"] = repo_path
+            with singer.Transformer() as transformer:
+                rec = transformer.transform(
+                    details, schema, metadata=metadata.to_map(mdata)
+                )
+                yield rec
+            return state
+    except Exception as e:
+        logger.exception(f"Failed to process details for PR {pr_number} in {repo_path}: {str(e)}")
         return state
 
 
