@@ -734,22 +734,36 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
 
 
 def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
-    for response in authed_get_all_pages(
-        "pr_commits",
-        f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/commits",
-    ):
-        commit_data = response.json()
-        for commit in commit_data["values"]:
-            commit["_sdc_repository"] = repo_path
-            commit["pr_number"] = pr_number
-            commit["pr_id"] = pr_id
-            commit["id"] = "{}-{}".format(pr_id, commit["hash"])
-            with singer.Transformer() as transformer:
-                rec = transformer.transform(
-                    commit, schema, metadata=metadata.to_map(mdata)
+    try:
+        for response in authed_get_all_pages(
+            "pr_commits",
+            f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/commits",
+        ):
+            commit_data = response.json()
+            if "error" in commit_data:
+                logger.warning(
+                    f"Error fetching commits for PR {pr_number} in {repo_path}: {commit_data['error'].get('message', 'Unknown error')}"
                 )
-            yield rec
+                return state
+                
+            if "values" not in commit_data:
+                logger.warning(f"No commit data found for PR {pr_number} in {repo_path}")
+                return state
+                
+            for commit in commit_data["values"]:
+                commit["_sdc_repository"] = repo_path
+                commit["pr_number"] = pr_number
+                commit["pr_id"] = pr_id
+                commit["id"] = "{}-{}".format(pr_id, commit["hash"])
+                with singer.Transformer() as transformer:
+                    rec = transformer.transform(
+                        commit, schema, metadata=metadata.to_map(mdata)
+                    )
+                yield rec
 
+            return state
+    except Exception as e:
+        logger.exception(f"Failed to process commits for PR {pr_number} in {repo_path}: {str(e)}")
         return state
 
 
