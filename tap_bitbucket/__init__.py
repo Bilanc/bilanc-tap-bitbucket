@@ -685,7 +685,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                                 {"since": singer.utils.strftime(extraction_time)},
                             )
                             pull_request_commits_counter.increment()
-                    if schemas.get("pull_request_stats") and pr_state == "MERGED":
+                    if schemas.get("pull_request_stats") and pr_state != "OPEN":
                         for pull_request_stats in get_pull_request_stats(
                             pr_id,
                             pr_number,
