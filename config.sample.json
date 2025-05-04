@@ -1,6 +1,6 @@
 {
     "access_token": "abcdefghijklmnopqrstuvwxyz1234567890ABCD",
-    "repository": "singer-io/target-stitch",
+    "repository": "workspace/repository-name",
     "start_date": "2021-01-01T00:00:00Z",
     "request_timeout": 300
 }
