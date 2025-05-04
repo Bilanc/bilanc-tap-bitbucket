@@ -613,7 +613,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                             pull_request_files_counter.increment()
 
                     if schemas.get("pull_request_commits"):
-                        for pull_request_stats in get_commits_for_pr(
+                        for pull_request_commit in get_commits_for_pr(
                             pr_id,
                             pr_number,
                             schemas["pull_request_commits"],
@@ -623,7 +623,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                         ):
                             singer.write_record(
                                 "pull_request_commits",
-                                pull_request_stats,
+                                pull_request_commit,
                                 time_extracted=extraction_time,
                             )
                             singer.write_bookmark(
@@ -633,8 +633,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                                 {"since": singer.utils.strftime(extraction_time)},
                             )
                             pull_request_commits_counter.increment()
-
-                    if schemas.get("pull_request_stats"):
+                    if schemas.get("pull_request_stats") and pr_state != "OPEN":
                         for pull_request_stats in get_pull_request_stats(
                             pr_id,
                             pr_number,
