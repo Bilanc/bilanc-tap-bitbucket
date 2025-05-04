@@ -242,31 +242,6 @@ def calculate_seconds(epoch):
     return math.ceil(epoch - current)
 
 
-def get_reset_time_and_remaining_calls(
-    response, message="Reset time will be reached in {} seconds. Remaining {} calls"
-):
-    try:
-        reset_time = int(response.headers["X-RateLimit-Reset"])
-        remaining = int(response.headers["X-RateLimit-Remaining"])
-        seconds_to_sleep = calculate_seconds(reset_time)
-        logger.info(message.format(seconds_to_sleep, remaining))
-    except:
-        logger.exception(response.headers)
-        return None, None
-    return reset_time, remaining
-
-
-def rate_throttling(response):
-    reset_time, remaining = get_reset_time_and_remaining_calls(response)
-    if remaining == 0:
-        seconds_to_sleep = calculate_seconds(reset_time)
-        logger.info(
-            "API rate limit was consumed. Tap will retry the data collection after %s seconds.",
-            seconds_to_sleep,
-        )
-        time.sleep(seconds_to_sleep)
-
-
 access_token_expires_at = None
 refresh_token_expires_at = None
 config_path = None
@@ -314,17 +289,6 @@ def authed_get(source, url, headers={}):
         logger.info("Making request to %s", url)
         resp = session.request(method="get", url=url, timeout=get_request_timeout())
         logger.info("Request received status code %s", resp.status_code)
-        if resp.status_code != 200:
-            _ = get_reset_time_and_remaining_calls(
-                resp,
-                message=f"[Request Status {resp.status_code}] Reset time was going to be reached in"
-                + " {} seconds.  Remaining {} calls",
-            )
-            # wait for limit to reset
-            if resp.status_code == 403:
-                rate_throttling(resp)
-            # retry
-            raise_for_error(resp, source)
         timer.tags[metrics.Tag.http_status_code] = resp.status_code
         if resp.status_code in [404, 409]:
             # return an empty response body since we're not raising a NotFoundException
