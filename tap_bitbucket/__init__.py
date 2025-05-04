@@ -745,11 +745,13 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                     f"Error fetching commits for PR {pr_number} in {repo_path}: {commit_data['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             if "values" not in commit_data:
-                logger.warning(f"No commit data found for PR {pr_number} in {repo_path}")
+                logger.warning(
+                    f"No commit data found for PR {pr_number} in {repo_path}"
+                )
                 return state
-                
+
             for commit in commit_data["values"]:
                 commit["_sdc_repository"] = repo_path
                 commit["pr_number"] = pr_number
@@ -763,7 +765,9 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
 
             return state
     except Exception as e:
-        logger.exception(f"Failed to process commits for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process commits for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -774,17 +778,19 @@ def get_comments_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
             f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/comments",
         ):
             comments = response.json()
-            
+
             if "error" in comments:
                 logger.warning(
                     f"Error fetching comments for PR {pr_number} in {repo_path}: {comments['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             if "values" not in comments:
-                logger.warning(f"No comments data found for PR {pr_number} in {repo_path}")
+                logger.warning(
+                    f"No comments data found for PR {pr_number} in {repo_path}"
+                )
                 return state
-                
+
             for comment in comments["values"]:
                 comment["_sdc_repository"] = repo_path
                 comment["pr_id"] = pr_id
@@ -798,7 +804,9 @@ def get_comments_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                 yield rec
             return state
     except Exception as e:
-        logger.exception(f"Failed to process comments for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process comments for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -809,31 +817,44 @@ def get_pull_request_stats(pr_id, pr_number, schema, repo_path, state, mdata):
             f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}/diffstat",
         ):
             stats = response.json()
-            
+
             if "error" in stats:
                 logger.warning(
                     f"Error fetching diffstat for PR {pr_number} in {repo_path}: {stats['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             if "values" not in stats:
-                logger.warning(f"No diffstat data found for PR {pr_number} in {repo_path}")
+                logger.warning(
+                    f"No diffstat data found for PR {pr_number} in {repo_path}"
+                )
                 return state
-                
-            for index, stat in enumerate(stats["values"]):
-                stat["id"] = "{}-{}".format(pr_id, index)
+
+            if stats["values"]:
+                stat = {}
+                stat["id"] = "{}-{}".format(pr_id, "stats")
                 stat["changed_files"] = len(stats["values"])
                 stat["pr_id"] = pr_id
                 stat["pr_number"] = pr_number
                 stat["_sdc_repository"] = repo_path
+                stat["lines_added"] = sum(
+                    stat["lines_added"] for stat in stats["values"]
+                )
+                stat["lines_removed"] = sum(
+                    stat["lines_removed"] for stat in stats["values"]
+                )
+                stat["type"] = "diffstat"
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         stat, schema, metadata=metadata.to_map(mdata)
                     )
                 yield rec
             return state
+
     except Exception as e:
-        logger.exception(f"Failed to process diffstat for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process diffstat for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -849,30 +870,34 @@ def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
                     f"Error fetching patch for PR {pr_number} in {repo_path}: status code {response.status_code}"
                 )
                 return state
-                
+
             content = str(response.content)
             if '"type": "error"' in content or '"error":' in content:
                 logger.warning(
                     f"Error in patch response for PR {pr_number} in {repo_path}: {content}"
                 )
                 return state
-                
+
             if not response.content:
                 logger.warning(f"Empty patch content for PR {pr_number} in {repo_path}")
                 return state
-                
+
             file = {}
             file["file"] = content.replace('"', "'")
             file["_sdc_repository"] = repo_path
             file["pr_id"] = pr_id
             file["pr_number"] = pr_number
             with singer.Transformer() as transformer:
-                rec = transformer.transform(file, schema, metadata=metadata.to_map(mdata))
+                rec = transformer.transform(
+                    file, schema, metadata=metadata.to_map(mdata)
+                )
             yield rec
 
         return state
     except Exception as e:
-        logger.exception(f"Failed to process files for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process files for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
@@ -883,13 +908,13 @@ def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
             f"{BASE_URL}/repositories/{repo_path}/pullrequests/{pr_number}",
         ):
             details = response.json()
-            
+
             if "error" in details:
                 logger.warning(
                     f"Error fetching details for PR {pr_number} in {repo_path}: {details['error'].get('message', 'Unknown error')}"
                 )
                 return state
-                
+
             details["id"] = pr_id
             details["pr_number"] = pr_number
             details["_sdc_repository"] = repo_path
@@ -900,7 +925,9 @@ def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
                 yield rec
             return state
     except Exception as e:
-        logger.exception(f"Failed to process details for PR {pr_number} in {repo_path}: {str(e)}")
+        logger.exception(
+            f"Failed to process details for PR {pr_number} in {repo_path}: {str(e)}"
+        )
         return state
 
 
