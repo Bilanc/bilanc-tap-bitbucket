@@ -6,6 +6,11 @@
               "string"
             ]
         },
+        "id": {
+          "type": [
+            "string"
+          ]
+        },
         "pr_id": {
             "type": [
               "string"
