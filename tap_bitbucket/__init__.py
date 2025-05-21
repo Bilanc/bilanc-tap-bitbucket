@@ -627,7 +627,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
 
                             pull_request_comments_counter.increment()
 
-                    if schemas.get("pull_request_files"):
+                    if schemas.get("pull_request_files") and pr_state != "OPEN":
                         for pr_file in get_pull_request_files(
                             pr_id,
                             pr_number,
