@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import pytz
 from singer import bookmarks, metrics, metadata
 from simplejson import JSONDecodeError
+import re
 
 session = requests.Session()
 logger = singer.get_logger()
@@ -26,7 +27,7 @@ KEY_PROPERTIES = {
     "commits": ["hash"],
     "pull_requests": ["id"],
     "pull_request_comments": ["id"],
-    "pull_request_files": ["pr_id"],
+    "pull_request_files": ["id"],
     "pull_request_stats": ["id"],
     "pull_request_commits": ["id"],
     "pull_request_details": ["id"],
@@ -125,6 +126,42 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     },
     502: {"raise_exception": RetriableServerError, "message": "Server Error"},
 }
+
+def split_git_patches(patch_string):
+    """
+    Split a string containing multiple git patches into individual patches.
+    
+    Args:
+        patch_string (str): String containing one or more git patches
+        
+    Returns:
+        list: List of individual patch strings
+    """
+    # Pattern to match the standard git patch header
+    # Format: "From <commit-hash> Mon Sep 17 00:00:00 2001"
+    pattern = r'(From [0-9a-f]{40} .*?)'
+    
+    # Remove the first occurrence of the pattern if it exists
+    patch_string = patch_string if len(patch_string) < 2 else patch_string[2:]
+    # Find all occurrences of the pattern
+    matches = re.finditer(pattern, patch_string)
+    
+    # Get the starting positions of each patch
+    start_positions = [0]  # Start with position 0 for the first patch
+    
+    for match in matches:
+        if match.start() > 0:  # Skip the first match which is already at position 0
+            start_positions.append(match.start())
+    
+    # Split the string based on the starting positions
+    patches = []
+    for i in range(len(start_positions)):
+        if i < len(start_positions) - 1:
+            patches.append(patch_string[start_positions[i]:start_positions[i+1]])
+        else:
+            patches.append(patch_string[start_positions[i]:])
+    
+    return patches
 
 
 def translate_state(state, catalog, repositories):
@@ -819,17 +856,17 @@ def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
             if not response.content:
                 logger.warning(f"Empty patch content for PR {pr_number} in {repo_path}")
                 return state
-
-            file = {}
-            file["file"] = content.replace('"', "'")
-            file["_sdc_repository"] = repo_path
-            file["pr_id"] = pr_id
-            file["pr_number"] = pr_number
-            with singer.Transformer() as transformer:
-                rec = transformer.transform(
-                    file, schema, metadata=metadata.to_map(mdata)
-                )
-            yield rec
+            
+            for patch_number, patch in enumerate(split_git_patches(content)):
+                file = {}
+                file["id"] = "{}-{}".format(pr_id, patch_number)
+                file["file"] = patch.replace('"', "'")
+                file["_sdc_repository"] = repo_path
+                file["pr_id"] = pr_id
+                file["pr_number"] = pr_number
+                with singer.Transformer() as transformer:
+                    rec = transformer.transform(file, schema, metadata=metadata.to_map(mdata))
+                yield rec
 
         return state
     except Exception as e:
