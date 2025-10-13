@@ -281,7 +281,6 @@ def calculate_seconds(epoch):
 access_token_expires_at = None
 refresh_token_expires_at = None
 config_path = None
-organization = None
 is_nango_token = False
 
 def refresh_token_if_expired():
