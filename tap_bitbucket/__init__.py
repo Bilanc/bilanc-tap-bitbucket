@@ -12,6 +12,7 @@ import pytz
 from singer import bookmarks, metrics, metadata
 from simplejson import JSONDecodeError
 import re
+from tap_bitbucket.nango import refresh_nango_token
 
 session = requests.Session()
 logger = singer.get_logger()
@@ -280,9 +281,11 @@ def calculate_seconds(epoch):
 access_token_expires_at = None
 refresh_token_expires_at = None
 config_path = None
-
+organization = None
+is_nango_token = False
 
 def refresh_token_if_expired():
+    global access_token_expires_at
     stale_access_token = (
         access_token_expires_at
         and access_token_expires_at < datetime.now(pytz.UTC).isoformat()
@@ -291,6 +294,21 @@ def refresh_token_if_expired():
         refresh_token_expires_at
         and refresh_token_expires_at < datetime.now(pytz.UTC).isoformat()
     )
+
+    if stale_access_token or stale_refresh_token:
+        # Pull config
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        if is_nango_token:
+            logger.info("Nango access token is stale, refreshing...")
+            config, access_token_expires_at = refresh_nango_token(config)
+            # set to 20 minutes before actual expiry to avoid Nango frontend edge case, refreshing token automatically within 15 minutes of expiring 
+            access_token_expires_at = (datetime.strptime(access_token_expires_at, "") - timedelta(minutes=20)).strftime("")
+            logger.info(f"Refreshed Nango access token, expires at {access_token_expires_at}")
+            session.headers['Authorization'] = 'Bearer ' + config["access_token"]
+            save_config(config)
+
 
 
 # pylint: disable=dangerous-default-value
@@ -1125,7 +1143,7 @@ def do_sync(config, state, catalog):
     singer.write_state(state)
 
     # pylint: disable=too-many-nested-blocks
-    for repo in repositories:
+    for index, repo in enumerate(repositories):
         logger.info("Starting sync of repository: %s", repo)
         for stream in catalog["streams"]:
             stream_id = stream["tap_stream_id"]
@@ -1134,6 +1152,10 @@ def do_sync(config, state, catalog):
 
             # if it is a "sub_stream", it will be sync'd by its parent
             if not SYNC_FUNCTIONS.get(stream_id):
+                continue
+
+            if index > 0 and stream_id == "organization_members":
+                # only need to sync organization_members once, not per repo
                 continue
 
             # if stream is selected, write schema and sync
@@ -1182,6 +1204,7 @@ def main():
     global access_token_expires_at
     global refresh_token_expires_at
     global config_path
+    global is_nango_token
 
     # Store config path for later use
     parser = argparse.ArgumentParser()
@@ -1195,6 +1218,16 @@ def main():
 
     access_token_expires_at = args.config.get("access_token_expires_at")
     refresh_token_expires_at = args.config.get("refresh_token_expires_at")
+
+    nango_connection_id = args.config.get("nango_connection_id")
+    nango_secret_key = args.config.get("nango_secret_key")
+
+    if nango_connection_id and nango_secret_key:
+        args.config, access_token_expires_at = refresh_nango_token(args.config)
+        # set to 20 minutes before actual expiry to avoid Nango frontend edge case, refreshing token automatically within 15 minutes of expiring 
+        access_token_expires_at = (datetime.strptime(access_token_expires_at, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(minutes=20)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        logger.info(f"Refreshed Nango access token, expires at {access_token_expires_at}")
+        is_nango_token = True
 
     if not args.config.get("access_token"):
         raise BadCredentialsException(
