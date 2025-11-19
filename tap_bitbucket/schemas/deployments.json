@@ -454,6 +454,13 @@
     },
     "version": {
       "type": "integer"
+    },
+    "inserted_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
     }
   }
 }
