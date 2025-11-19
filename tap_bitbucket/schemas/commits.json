@@ -1,0 +1,332 @@
+{
+  "type": "object",
+  "properties": {
+    "_sdc_repository": {
+      "type": [
+        "string"
+      ]
+    },
+    "hash": {
+      "type": [
+        "string"
+      ]
+    },
+    "type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "author": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "raw": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "display_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "uuid": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nickname": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "account_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "links": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "self": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "href": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uri"
+                    }
+                  }
+                },
+                "html": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "href": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uri"
+                    }
+                  }
+                },
+                "avatar": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "href": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uri"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parents": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "links": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "self": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              },
+              "html": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "href": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "links": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "self": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        },
+        "html": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        },
+        "diff": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        },
+        "approve": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        },
+        "comments": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        },
+        "statuses": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        },
+        "patch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "href": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            }
+          }
+        }
+      }
+    },
+    "inserted_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

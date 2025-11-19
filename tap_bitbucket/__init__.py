@@ -596,6 +596,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                     pr["id"] = "{}-{}".format(repo_path, pr_number)
                     pr_id = pr["id"]
                     pr["_sdc_repository"] = repo_path
+                    pr["inserted_at"] = singer.utils.strftime(extraction_time)
 
                     # transform and write pull_request record
                     try:
@@ -758,6 +759,7 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                 commit["pr_number"] = pr_number
                 commit["pr_id"] = pr_id
                 commit["id"] = "{}-{}".format(pr_id, commit["hash"])
+                commit["inserted_at"] = singer.utils.strftime(singer.utils.now())
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         commit, schema, metadata=metadata.to_map(mdata)
@@ -798,6 +800,7 @@ def get_comments_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                 comment["pr_number"] = pr_number
                 comment["number"] = comment["id"]
                 comment["id"] = "{}-{}".format(pr_id, comment["id"])
+                comment["inserted_at"] = singer.utils.strftime(singer.utils.now())
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         comment, schema, metadata=metadata.to_map(mdata)
@@ -837,6 +840,7 @@ def get_pull_request_stats(pr_id, pr_number, schema, repo_path, state, mdata):
                 stat["pr_id"] = pr_id
                 stat["pr_number"] = pr_number
                 stat["_sdc_repository"] = repo_path
+                stat["inserted_at"] = singer.utils.strftime(singer.utils.now())
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         stat, schema, metadata=metadata.to_map(mdata)
@@ -881,6 +885,7 @@ def get_pull_request_files(pr_id, pr_number, schema, repo_path, state, mdata):
                 file["_sdc_repository"] = repo_path
                 file["pr_id"] = pr_id
                 file["pr_number"] = pr_number
+                file["inserted_at"] = singer.utils.strftime(singer.utils.now())
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(file, schema, metadata=metadata.to_map(mdata))
                 yield rec
@@ -910,6 +915,7 @@ def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
             details["id"] = pr_id
             details["pr_number"] = pr_number
             details["_sdc_repository"] = repo_path
+            details["inserted_at"] = singer.utils.strftime(singer.utils.now())
             with singer.Transformer() as transformer:
                 rec = transformer.transform(
                     details, schema, metadata=metadata.to_map(mdata)
@@ -941,6 +947,7 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
             extraction_time = singer.utils.now()
             for commit in commits["values"]:
                 commit["_sdc_repository"] = repo_path
+                commit["inserted_at"] = singer.utils.strftime(extraction_time)
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         commit, schema, metadata=metadata.to_map(mdata)
@@ -980,6 +987,7 @@ def get_all_deployments(schema, repo_path, state, mdata, start_date):
                 ):
                     return state
                 deployment["_sdc_repository"] = repo_path
+                deployment["inserted_at"] = singer.utils.strftime(extraction_time)
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         deployment, schema, metadata=metadata.to_map(mdata)
@@ -1006,6 +1014,7 @@ def get_all_deployment_environments(schema, repo_path, state, mdata, _start_date
             extraction_time = singer.utils.now()
             for deployment_environment in deployment_environments["values"]:
                 deployment_environment["_sdc_repository"] = repo_path
+                deployment_environment["inserted_at"] = singer.utils.strftime(extraction_time)
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         deployment_environment, schema, metadata=metadata.to_map(mdata)
@@ -1034,6 +1043,7 @@ def get_all_organization_members(schemas, workspace, state, mdata, _start_date):
             for member in organization_members["values"]:
                 # transform and write release record
                 member["uuid"] = member["user"]["uuid"]
+                member["inserted_at"] = singer.utils.strftime(extraction_time)
                 with singer.Transformer() as transformer:
                     team_members_rec = transformer.transform(
                         member, schemas, metadata=metadata.to_map(mdata)
