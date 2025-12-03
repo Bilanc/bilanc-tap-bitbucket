@@ -121,12 +121,58 @@ ERROR_CODE_EXCEPTION_MAPPING = {
         "raise_exception": UnprocessableError,
         "message": "The request was not able to process right now.",
     },
+    429: {
+        "raise_exception": APIRateLimitExceededError,
+        "message": "API rate limit exceeded. Please wait before making more requests.",
+    },
     500: {
         "raise_exception": InternalServerError,
         "message": "An error has occurred at Bitbucket's end.",
     },
     502: {"raise_exception": RetriableServerError, "message": "Server Error"},
 }
+
+def calculate_wait_time(response, last_reset_time=None):
+    # Check standard headers first
+    retry_after = response.headers.get('Retry-After')
+    if retry_after:
+        try:
+            wait_seconds = int(retry_after)
+            logger.info(f"Rate limited. Using Retry-After header: {wait_seconds} seconds")
+            return wait_seconds, datetime.utcnow()
+        except ValueError:
+            logger.warning(f"Invalid Retry-After value: {retry_after}")
+    
+    # Check for X-RateLimit-Reset header (Unix timestamp)
+    reset_header = response.headers.get('X-RateLimit-Reset')
+    if reset_header:
+        try:
+            reset_timestamp = int(reset_header)
+            current_timestamp = int(time.time())
+            wait_seconds = max(1, reset_timestamp - current_timestamp + 5)  # Add 5s buffer
+            logger.info(f"Rate limited. Using X-RateLimit-Reset: waiting {wait_seconds} seconds")
+            return wait_seconds, datetime.utcnow()
+        except ValueError:
+            logger.warning(f"Invalid X-RateLimit-Reset value: {reset_header}")
+    
+    # Fallback: Bitbucket's hourly limit is typically 1000 requests/hour for authenticated users
+    current_time = datetime.utcnow()
+    
+    if last_reset_time is None:
+        # Wait until the next hour boundary
+        next_hour = (current_time + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        wait_seconds = int((next_hour - current_time).total_seconds())
+    else:
+        # Wait until 1 hour after the last known reset
+        next_reset = last_reset_time + timedelta(hours=1)
+        wait_seconds = max(60, int((next_reset - current_time).total_seconds()))
+    
+    # Add a 5-second buffer to be safe
+    wait_seconds += 5
+    logger.info(f"Rate limited. Using fallback wait time: {wait_seconds} seconds (~{wait_seconds/60:.1f} minutes)")
+
+    return wait_seconds, current_time
+
 
 def split_git_patches(patch_string):
     """
@@ -273,11 +319,6 @@ def raise_for_error(resp, source):
     raise exc(message) from None
 
 
-def calculate_seconds(epoch):
-    current = time.time()
-    return math.ceil(epoch - current)
-
-
 access_token_expires_at = None
 refresh_token_expires_at = None
 config_path = None
@@ -335,6 +376,15 @@ def authed_get(source, url, headers={}):
         resp = session.request(method="get", url=url, timeout=get_request_timeout())
         logger.info("Request received status code %s", resp.status_code)
         timer.tags[metrics.Tag.http_status_code] = resp.status_code
+        if resp.status_code != 200:
+            if resp.status_code == 429:
+                wait_seconds, reset_time = calculate_wait_time(resp)
+                logger.info(f"Rate limited (429). Waiting {wait_seconds} seconds (~{wait_seconds/60:.1f} minutes)")
+                time.sleep(wait_seconds)
+                raise APIRateLimitExceededError(f"Rate limit exceeded. Waited {wait_seconds} seconds before retry.")
+            # retry
+            raise_for_error(resp, source)
+        timer.tags[metrics.Tag.http_status_code] = resp.status_code
         if resp.status_code in [404, 409]:
             # return an empty response body since we're not raising a NotFoundException
             resp._content = b"{}"  # pylint: disable=protected-access
@@ -345,9 +395,13 @@ def authed_get_all_pages(source, url, headers={}):
     while True:
         r = authed_get(source, url, headers)
         yield r
-        if "next" in r.links:
-            url = r.links["next"]["url"]
-        else:
+        try:
+            response_data = r.json()
+            if "next" in response_data.keys():
+                url = response_data["next"]
+            else:
+                break
+        except ValueError:
             break
 
 
