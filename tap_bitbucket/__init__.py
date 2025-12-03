@@ -132,14 +132,6 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     502: {"raise_exception": RetriableServerError, "message": "Server Error"},
 }
 
-
-def calculate_seconds(epoch):
-    current = time.time()
-    if epoch < current:
-        return 1
-    return math.ceil(epoch - current)
-
-
 def calculate_wait_time(response, last_reset_time=None):
     # Check standard headers first
     retry_after = response.headers.get('Retry-After')
@@ -325,11 +317,6 @@ def raise_for_error(resp, source):
         "raise_exception", BitbucketException
     )
     raise exc(message) from None
-
-
-def calculate_seconds(epoch):
-    current = time.time()
-    return math.ceil(epoch - current)
 
 
 access_token_expires_at = None
