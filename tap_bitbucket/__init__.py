@@ -1200,7 +1200,7 @@ def do_sync(config, state, catalog):
 
     repositories = extract_repos_from_config(config)
 
-    workspaces: List[str] = config.get("workspace")
+    workspaces: str = config.get("workspace")
 
     state = translate_state(state, catalog, repositories)
     singer.write_state(state)
