@@ -1200,7 +1200,7 @@ def do_sync(config, state, catalog):
 
     repositories = extract_repos_from_config(config)
 
-    workspace: str = config.get("workspace")
+    workspaces: str = config.get("workspace")
 
     state = translate_state(state, catalog, repositories)
     singer.write_state(state)
@@ -1232,9 +1232,10 @@ def do_sync(config, state, catalog):
                 # sync stream
                 if not sub_stream_ids:
                     if stream_id == "organization_members":
-                        state = sync_func(
-                            stream_schema, workspace, state, mdata, start_date
-                        )
+                        for workspace in workspaces.split(" "):
+                            state = sync_func(
+                                stream_schema, workspace, state, mdata, start_date
+                            )
                     else:
                         state = sync_func(stream_schema, repo, state, mdata, start_date)
 
