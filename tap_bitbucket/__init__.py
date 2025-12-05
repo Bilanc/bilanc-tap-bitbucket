@@ -627,167 +627,156 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
     ) as pull_request_stats_counter, metrics.record_counter(
         "pull_request_details"
     ) as pull_request_details_counter:
-        for pr_state in ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"]:
-            for response in authed_get_all_pages(
-                "pull_requests",
-                f"{BASE_URL}/repositories/{repo_path}/pullrequests?state={pr_state}&pagelen=50",
-            ):
-                pull_requests = response.json()["values"]
-                extraction_time = singer.utils.now()
-                for pr in pull_requests:
-
-                    # skip records that haven't been updated since the last run
-                    # the Bitbucket API doesn't currently allow a ?since param for pulls
-                    # once we find the first piece of old data we can return, thanks to
-                    # the sorting
-                    if (
-                        bookmark_time
-                        and singer.utils.strptime_to_utc(pr.get("updated_on"))
-                        < bookmark_time
-                    ):
-                        return state
-
-                    pr_number = pr.get("id")
-                    pr["pr_number"] = pr_number
-                    pr["id"] = "{}-{}".format(repo_path, pr_number)
-                    pr_id = pr["id"]
-                    pr["_sdc_repository"] = repo_path
-                    pr["inserted_at"] = singer.utils.strftime(extraction_time)
-
-                    # transform and write pull_request record
-                    try:
-                        with singer.Transformer() as transformer:
-                            rec = transformer.transform(
-                                pr,
-                                schemas["pull_requests"],
-                                metadata=metadata.to_map(mdata["pull_requests"]),
-                            )
-                    except:
-                        logger.exception(f"Failed to transform record [{pr}]")
-                        raise
-
-                    singer.write_record(
-                        "pull_requests", rec, time_extracted=extraction_time
-                    )
-                    singer.write_bookmark(
-                        state,
+        for response in authed_get_all_pages(
+            "pull_requests",
+            f"{BASE_URL}/repositories/{repo_path}/pullrequests?state=MERGED&state=DECLINED&state=SUPERSEDED&state=OPEN&sort=-updated_on&pagelen=50",
+        ):
+            pull_requests = response.json()["values"]
+            extraction_time = singer.utils.now()
+            for pr in pull_requests:
+                # skip records that haven't been updated since the last run
+                # the Bitbucket API doesn't currently allow a ?since param for pulls
+                # once we find the first piece of old data we can return, thanks to
+                # the sorting
+                if (
+                    bookmark_time
+                    and singer.utils.strptime_to_utc(pr.get("updated_on"))
+                    < bookmark_time
+                ):
+                    return state
+                pr_number = pr.get("id")
+                pr["pr_number"] = pr_number
+                pr["id"] = "{}-{}".format(repo_path, pr_number)
+                pr_id = pr["id"]
+                pr["_sdc_repository"] = repo_path
+                pr["inserted_at"] = singer.utils.strftime(extraction_time)
+                # transform and write pull_request record
+                try:
+                    with singer.Transformer() as transformer:
+                        rec = transformer.transform(
+                            pr,
+                            schemas["pull_requests"],
+                            metadata=metadata.to_map(mdata["pull_requests"]),
+                        )
+                except:
+                    logger.exception(f"Failed to transform record [{pr}]")
+                    raise
+                singer.write_record(
+                    "pull_requests", rec, time_extracted=extraction_time
+                )
+                singer.write_bookmark(
+                    state,
+                    repo_path,
+                    "pull_requests",
+                    {"since": singer.utils.strftime(extraction_time)},
+                )
+                counter.increment()
+                # sync reviews if that schema is present (only there if selected)
+                if schemas.get("pull_request_comments"):
+                    for review_rec in get_comments_for_pr(
+                        pr_id,
+                        pr_number,
+                        schemas["pull_request_comments"],
                         repo_path,
-                        "pull_requests",
-                        {"since": singer.utils.strftime(extraction_time)},
-                    )
-                    counter.increment()
-
-                    # sync reviews if that schema is present (only there if selected)
-                    if schemas.get("pull_request_comments"):
-                        for review_rec in get_comments_for_pr(
-                            pr_id,
-                            pr_number,
-                            schemas["pull_request_comments"],
-                            repo_path,
+                        state,
+                        mdata["pull_request_comments"],
+                    ):
+                        singer.write_record(
+                            "pull_request_comments",
+                            review_rec,
+                            time_extracted=extraction_time,
+                        )
+                        singer.write_bookmark(
                             state,
-                            mdata["pull_request_comments"],
-                        ):
-                            singer.write_record(
-                                "pull_request_comments",
-                                review_rec,
-                                time_extracted=extraction_time,
-                            )
-                            singer.write_bookmark(
-                                state,
-                                repo_path,
-                                "pull_request_comments",
-                                {"since": singer.utils.strftime(extraction_time)},
-                            )
-
-                            pull_request_comments_counter.increment()
-
-                    if schemas.get("pull_request_files") and pr_state != "OPEN":
-                        for pr_file in get_pull_request_files(
-                            pr_id,
-                            pr_number,
-                            schemas["pull_request_files"],
                             repo_path,
+                            "pull_request_comments",
+                            {"since": singer.utils.strftime(extraction_time)},
+                        )
+                        pull_request_comments_counter.increment()
+                if schemas.get("pull_request_files") and pr_state != "OPEN":
+                    for pr_file in get_pull_request_files(
+                        pr_id,
+                        pr_number,
+                        schemas["pull_request_files"],
+                        repo_path,
+                        state,
+                        mdata["pull_request_files"],
+                    ):
+                        singer.write_record(
+                            "pull_request_files",
+                            pr_file,
+                            time_extracted=extraction_time,
+                        )
+                        singer.write_bookmark(
                             state,
-                            mdata["pull_request_files"],
-                        ):
-                            singer.write_record(
-                                "pull_request_files",
-                                pr_file,
-                                time_extracted=extraction_time,
-                            )
-                            singer.write_bookmark(
-                                state,
-                                repo_path,
-                                "pull_request_files",
-                                {"since": singer.utils.strftime(extraction_time)},
-                            )
-                            pull_request_files_counter.increment()
-
-                    if schemas.get("pull_request_commits"):
-                        for pull_request_commit in get_commits_for_pr(
-                            pr_id,
-                            pr_number,
-                            schemas["pull_request_commits"],
                             repo_path,
+                            "pull_request_files",
+                            {"since": singer.utils.strftime(extraction_time)},
+                        )
+                        pull_request_files_counter.increment()
+                if schemas.get("pull_request_commits"):
+                    for pull_request_commit in get_commits_for_pr(
+                        pr_id,
+                        pr_number,
+                        schemas["pull_request_commits"],
+                        repo_path,
+                        state,
+                        mdata["pull_request_commits"],
+                    ):
+                        singer.write_record(
+                            "pull_request_commits",
+                            pull_request_commit,
+                            time_extracted=extraction_time,
+                        )
+                        singer.write_bookmark(
                             state,
-                            mdata["pull_request_commits"],
-                        ):
-                            singer.write_record(
-                                "pull_request_commits",
-                                pull_request_commit,
-                                time_extracted=extraction_time,
-                            )
-                            singer.write_bookmark(
-                                state,
-                                repo_path,
-                                "pull_request_commits",
-                                {"since": singer.utils.strftime(extraction_time)},
-                            )
-                            pull_request_commits_counter.increment()
-                    if schemas.get("pull_request_stats") and pr_state != "OPEN":
-                        for pull_request_stats in get_pull_request_stats(
-                            pr_id,
-                            pr_number,
-                            schemas["pull_request_stats"],
                             repo_path,
+                            "pull_request_commits",
+                            {"since": singer.utils.strftime(extraction_time)},
+                        )
+                        pull_request_commits_counter.increment()
+                if schemas.get("pull_request_stats") and pr_state != "OPEN":
+                    for pull_request_stats in get_pull_request_stats(
+                        pr_id,
+                        pr_number,
+                        schemas["pull_request_stats"],
+                        repo_path,
+                        state,
+                        mdata["pull_request_stats"],
+                    ):
+                        singer.write_record(
+                            "pull_request_stats",
+                            pull_request_stats,
+                            time_extracted=extraction_time,
+                        )
+                        singer.write_bookmark(
                             state,
-                            mdata["pull_request_stats"],
-                        ):
-                            singer.write_record(
-                                "pull_request_stats",
-                                pull_request_stats,
-                                time_extracted=extraction_time,
-                            )
-                            singer.write_bookmark(
-                                state,
-                                repo_path,
-                                "pull_request_stats",
-                                {"since": singer.utils.strftime(extraction_time)},
-                            )
-                            pull_request_stats_counter.increment()
-
-                    if schemas.get("pull_request_details"):
-                        for pull_request_stats in get_pull_request_details(
-                            pr_id,
-                            pr_number,
-                            schemas["pull_request_details"],
                             repo_path,
+                            "pull_request_stats",
+                            {"since": singer.utils.strftime(extraction_time)},
+                        )
+                        pull_request_stats_counter.increment()
+                if schemas.get("pull_request_details"):
+                    for pull_request_stats in get_pull_request_details(
+                        pr_id,
+                        pr_number,
+                        schemas["pull_request_details"],
+                        repo_path,
+                        state,
+                        mdata["pull_request_details"],
+                    ):
+                        singer.write_record(
+                            "pull_request_details",
+                            pull_request_stats,
+                            time_extracted=extraction_time,
+                        )
+                        singer.write_bookmark(
                             state,
-                            mdata["pull_request_details"],
-                        ):
-                            singer.write_record(
-                                "pull_request_details",
-                                pull_request_stats,
-                                time_extracted=extraction_time,
-                            )
-                            singer.write_bookmark(
-                                state,
-                                repo_path,
-                                "pull_request_details",
-                                {"since": singer.utils.strftime(extraction_time)},
-                            )
-                            pull_request_details_counter.increment()
-
+                            repo_path,
+                            "pull_request_details",
+                            {"since": singer.utils.strftime(extraction_time)},
+                        )
+                        pull_request_details_counter.increment()
     return state
 
 
