@@ -638,6 +638,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
                 # the Bitbucket API doesn't currently allow a ?since param for pulls
                 # once we find the first piece of old data we can return, thanks to
                 # the sorting
+                pr_state: str = pr.get("state")
                 if (
                     bookmark_time
                     and singer.utils.strptime_to_utc(pr.get("updated_on"))
