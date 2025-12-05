@@ -630,7 +630,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
         for pr_state in ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"]:
             for response in authed_get_all_pages(
                 "pull_requests",
-                f"{BASE_URL}/repositories/{repo_path}/pullrequests?state={pr_state}",
+                f"{BASE_URL}/repositories/{repo_path}/pullrequests?state={pr_state}&pagelen=50",
             ):
                 pull_requests = response.json()["values"]
                 extraction_time = singer.utils.now()
@@ -991,9 +991,9 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
     """
     bookmark = get_bookmark(state, repo_path, "commits", "since", start_date)
     if bookmark:
-        query_string = "?since={}".format(bookmark)
+        query_string = "?since={}&pagelen=100".format(bookmark)
     else:
-        query_string = ""
+        query_string = "?pagelen=100"
 
     with metrics.record_counter("commits") as counter:
         for response in authed_get_all_pages(
