@@ -398,6 +398,8 @@ def authed_get_all_pages(source, url, headers={}):
         try:
             response_data = r.json()
             if "next" in response_data.keys():
+                if url == response_data["next"]:
+                    break
                 url = response_data["next"]
             else:
                 break
