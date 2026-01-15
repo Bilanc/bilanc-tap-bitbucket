@@ -289,14 +289,14 @@
               }
             }
           }
-        }
+        }        
+      },
+      "inserted_at": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "date-time"
       }
-    },
-    "inserted_at": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "date-time"
     }
 }
