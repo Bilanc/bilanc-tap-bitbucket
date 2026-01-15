@@ -36,7 +36,6 @@ KEY_PROPERTIES = {
     "deployment_environments": ["uuid"],
     "organization_members": ["uuid"],
 }
-
 VISITED_ORGS_IDS = set()
 
 
