@@ -789,6 +789,7 @@ def get_diffstat_for_commit(repo_path, commit_hash):
     lines_added = 0
     lines_removed = 0
     files_changed = 0
+    success = True
     try:
         for response in authed_get_all_pages(
             "commit_diffstat",
@@ -796,16 +797,19 @@ def get_diffstat_for_commit(repo_path, commit_hash):
         ):
             data = response.json()
             if "error" in data:
+                success = False
                 break
             for entry in data.get("values", []):
                 lines_added += entry.get("lines_added", 0) or 0
                 lines_removed += entry.get("lines_removed", 0) or 0
                 files_changed += 1
     except Exception:
+        success = False
         logger.warning(f"Could not fetch diffstat for commit {commit_hash} in {repo_path}")
 
     result = {"lines_added": lines_added, "lines_removed": lines_removed, "files_changed": files_changed}
-    _commit_diffstat_cache[cache_key] = result
+    if success:
+        _commit_diffstat_cache[cache_key] = result
     return result
 
 
@@ -1027,6 +1031,8 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
     else:
         bookmark_time = 0
 
+    max_commit_time = bookmark_time if bookmark_time else None
+
     with metrics.record_counter("commits") as counter:
         for response in authed_get_all_pages(
             "commits",
@@ -1059,17 +1065,23 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
                 commit["files_changed"] = diffstat["files_changed"]
                 commit["inserted_at"] = singer.utils.strftime(extraction_time)
 
+                if commit_date:
+                    commit_dt = singer.utils.strptime_to_utc(commit_date)
+                    if max_commit_time is None or commit_dt > max_commit_time:
+                        max_commit_time = commit_dt
+
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         commit, schema, metadata=metadata.to_map(mdata)
                     )
                 singer.write_record("commits", rec, time_extracted=extraction_time)
-                singer.write_bookmark(
-                    state,
-                    repo_path,
-                    "commits",
-                    {"since": singer.utils.strftime(extraction_time)},
-                )
+                if max_commit_time:
+                    singer.write_bookmark(
+                        state,
+                        repo_path,
+                        "commits",
+                        {"since": singer.utils.strftime(max_commit_time)},
+                    )
                 counter.increment()
 
             if stop_commit_scan:
