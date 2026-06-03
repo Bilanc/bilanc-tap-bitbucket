@@ -1052,7 +1052,7 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
             for commit in commit_data.get("values", []):
                 commit_date = commit.get("date")
                 if bookmark_time and commit_date:
-                    if singer.utils.strptime_to_utc(commit_date) < bookmark_time:
+                    if singer.utils.strptime_to_utc(commit_date) <= bookmark_time:
                         stop_commit_scan = True
                         break
 
@@ -1075,17 +1075,18 @@ def get_all_commits(schema, repo_path, state, mdata, start_date):
                         commit, schema, metadata=metadata.to_map(mdata)
                     )
                 singer.write_record("commits", rec, time_extracted=extraction_time)
-                if max_commit_time:
-                    singer.write_bookmark(
-                        state,
-                        repo_path,
-                        "commits",
-                        {"since": singer.utils.strftime(max_commit_time)},
-                    )
                 counter.increment()
 
             if stop_commit_scan:
                 break
+
+    if max_commit_time:
+        singer.write_bookmark(
+            state,
+            repo_path,
+            "commits",
+            {"since": singer.utils.strftime(max_commit_time)},
+        )
 
     return state
 
