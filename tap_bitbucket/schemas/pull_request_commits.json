@@ -279,6 +279,15 @@
         }
       }
     },
+    "lines_added": {
+      "type": ["integer", "null"]
+    },
+    "lines_removed": {
+      "type": ["integer", "null"]
+    },
+    "files_changed": {
+      "type": ["integer", "null"]
+    },
     "inserted_at": {
       "type": [
         "string",

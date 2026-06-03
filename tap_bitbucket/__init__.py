@@ -37,6 +37,7 @@ KEY_PROPERTIES = {
     "organization_members": ["uuid"],
 }
 VISITED_ORGS_IDS = set()
+_commit_diffstat_cache = {}  # (repo_path, commit_hash) -> {lines_added, lines_removed, files_changed}
 
 
 class BitbucketException(Exception):
@@ -780,6 +781,38 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
     return state
 
 
+def get_diffstat_for_commit(repo_path, commit_hash):
+    cache_key = (repo_path, commit_hash)
+    if cache_key in _commit_diffstat_cache:
+        return _commit_diffstat_cache[cache_key]
+
+    lines_added = 0
+    lines_removed = 0
+    files_changed = 0
+    success = True
+    try:
+        for response in authed_get_all_pages(
+            "commit_diffstat",
+            f"{BASE_URL}/repositories/{repo_path}/diffstat/{commit_hash}?pagelen=100",
+        ):
+            data = response.json()
+            if "error" in data:
+                success = False
+                break
+            for entry in data.get("values", []):
+                lines_added += entry.get("lines_added", 0) or 0
+                lines_removed += entry.get("lines_removed", 0) or 0
+                files_changed += 1
+    except Exception:
+        success = False
+        logger.warning(f"Could not fetch diffstat for commit {commit_hash} in {repo_path}")
+
+    result = {"lines_added": lines_added, "lines_removed": lines_removed, "files_changed": files_changed}
+    if success:
+        _commit_diffstat_cache[cache_key] = result
+    return result
+
+
 def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
     try:
         for response in authed_get_all_pages(
@@ -805,6 +838,10 @@ def get_commits_for_pr(pr_id, pr_number, schema, repo_path, state, mdata):
                 commit["pr_id"] = pr_id
                 commit["id"] = "{}-{}".format(pr_id, commit["hash"])
                 commit["inserted_at"] = singer.utils.strftime(singer.utils.now())
+                diffstat = get_diffstat_for_commit(repo_path, commit["hash"])
+                commit["lines_added"] = diffstat["lines_added"]
+                commit["lines_removed"] = diffstat["lines_removed"]
+                commit["files_changed"] = diffstat["files_changed"]
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         commit, schema, metadata=metadata.to_map(mdata)
@@ -976,35 +1013,80 @@ def get_pull_request_details(pr_id, pr_number, schema, repo_path, state, mdata):
 
 def get_all_commits(schema, repo_path, state, mdata, start_date):
     """
-    Retrieves all commits from the Bitbucket API
+    Retrieves commits to the default branch only, annotated with diff size stats.
     """
-    bookmark = get_bookmark(state, repo_path, "commits", "since", start_date)
-    if bookmark:
-        query_string = "?since={}&pagelen=100".format(bookmark)
+    try:
+        repo_resp = authed_get(
+            "commits_repo_info",
+            f"{BASE_URL}/repositories/{repo_path}",
+        ).json()
+        default_branch = (repo_resp.get("mainbranch") or {}).get("name") or "main"
+    except Exception:
+        default_branch = "main"
+        logger.warning(f"Could not determine default branch for {repo_path}, falling back to 'main'")
+
+    bookmark_value = get_bookmark(state, repo_path, "commits", "since", start_date)
+    if bookmark_value:
+        bookmark_time = singer.utils.strptime_to_utc(bookmark_value)
     else:
-        query_string = "?pagelen=100"
+        bookmark_time = 0
+
+    max_commit_time = bookmark_time if bookmark_time else None
 
     with metrics.record_counter("commits") as counter:
         for response in authed_get_all_pages(
-            "commits", f"{BASE_URL}/repositories/{repo_path}/commits{query_string}"
+            "commits",
+            f"{BASE_URL}/repositories/{repo_path}/commits/{default_branch}?pagelen=100",
         ):
-            commits = response.json()
+            commit_data = response.json()
+            if "error" in commit_data:
+                logger.warning(
+                    f"Error fetching commits for {repo_path}: "
+                    f"{commit_data['error'].get('message', 'Unknown error')}"
+                )
+                break
+
             extraction_time = singer.utils.now()
-            for commit in commits["values"]:
+            stop_commit_scan = False
+
+            for commit in commit_data.get("values", []):
+                commit_date = commit.get("date")
+                if bookmark_time and commit_date:
+                    if singer.utils.strptime_to_utc(commit_date) <= bookmark_time:
+                        stop_commit_scan = True
+                        break
+
+                diffstat = get_diffstat_for_commit(repo_path, commit["hash"])
+
                 commit["_sdc_repository"] = repo_path
+                commit["branch"] = default_branch
+                commit["lines_added"] = diffstat["lines_added"]
+                commit["lines_removed"] = diffstat["lines_removed"]
+                commit["files_changed"] = diffstat["files_changed"]
                 commit["inserted_at"] = singer.utils.strftime(extraction_time)
+
+                if commit_date:
+                    commit_dt = singer.utils.strptime_to_utc(commit_date)
+                    if max_commit_time is None or commit_dt > max_commit_time:
+                        max_commit_time = commit_dt
+
                 with singer.Transformer() as transformer:
                     rec = transformer.transform(
                         commit, schema, metadata=metadata.to_map(mdata)
                     )
                 singer.write_record("commits", rec, time_extracted=extraction_time)
-                singer.write_bookmark(
-                    state,
-                    repo_path,
-                    "commits",
-                    {"since": singer.utils.strftime(extraction_time)},
-                )
                 counter.increment()
+
+            if stop_commit_scan:
+                break
+
+    if max_commit_time:
+        singer.write_bookmark(
+            state,
+            repo_path,
+            "commits",
+            {"since": singer.utils.strftime(max_commit_time)},
+        )
 
     return state
 
@@ -1161,6 +1243,7 @@ def save_config(config):
 
 
 SYNC_FUNCTIONS = {
+    "commits": get_all_commits,
     "pull_requests": get_all_pull_requests,
     "organization_members": get_all_organization_members,
     "deployments": get_all_deployments,
