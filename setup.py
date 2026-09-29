@@ -16,7 +16,7 @@ setup(
         "urllib3==1.26.20",
         "backoff==1.8.0",
         "cryptography==37.0.4",
-        "pyjwt==2.4.0",
+        "pyjwt==2.14.0",
     ],
     extras_require={"dev": ["pylint==2.6.2", "ipdb", "nose", "requests-mock==1.9.3"]},
     entry_points="""
