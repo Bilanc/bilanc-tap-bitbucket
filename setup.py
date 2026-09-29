@@ -13,7 +13,7 @@ setup(
     install_requires=[
         "singer-python==5.12.1",
         "requests==2.29.0",
-        "urllib3==1.26.20",
+        "urllib3==2.7.0",
         "backoff==1.8.0",
         "cryptography==37.0.4",
         "pyjwt==2.4.0",
