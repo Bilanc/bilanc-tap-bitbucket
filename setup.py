@@ -12,7 +12,7 @@ setup(
     py_modules=["tap-bitbucket"],
     install_requires=[
         "singer-python==5.12.1",
-        "requests==2.29.0",
+        "requests==2.34.2",
         "urllib3==2.8.0",
         "backoff==1.8.0",
         "cryptography==37.0.4",
