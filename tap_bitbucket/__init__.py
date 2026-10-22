@@ -3,6 +3,7 @@ import json
 import collections
 import time
 import requests
+import urllib3
 import backoff
 import singer
 import math
@@ -354,11 +355,15 @@ def refresh_token_if_expired():
 # pylint: disable=dangerous-default-value
 # during 'Timeout' error there is also possibility of 'ConnectionError',
 # hence added backoff for 'ConnectionError' too.
+# ChunkedEncodingError/ProtocolError: Bitbucket closed a chunked response
+# mid-body; it is a RequestException but not a ConnectionError.
 @backoff.on_exception(
     backoff.expo,
     (
         requests.Timeout,
         requests.ConnectionError,
+        requests.exceptions.ChunkedEncodingError,
+        urllib3.exceptions.ProtocolError,
         ConnectionRefusedError,
         ConnectionResetError,
         APIRateLimitExceededError,
