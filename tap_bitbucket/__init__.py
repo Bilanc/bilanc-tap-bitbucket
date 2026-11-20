@@ -636,7 +636,7 @@ def get_all_pull_requests(schemas, repo_path, state, mdata, start_date):
             "pull_requests",
             f"{BASE_URL}/repositories/{repo_path}/pullrequests?state=MERGED&state=DECLINED&state=SUPERSEDED&state=OPEN&sort=-updated_on&pagelen=50",
         ):
-            pull_requests = response.json()["values"]
+            pull_requests = response.json().get("values", [])
             extraction_time = singer.utils.now()
             for pr in pull_requests:
                 # skip records that haven't been updated since the last run
@@ -1109,7 +1109,7 @@ def get_all_deployments(schema, repo_path, state, mdata, start_date):
         ):
             deployments = response.json()
             extraction_time = singer.utils.now()
-            for deployment in deployments["values"]:
+            for deployment in deployments.get("values", []):
                 if (
                     bookmark_time
                     and singer.utils.strptime_to_utc(
@@ -1144,7 +1144,7 @@ def get_all_deployment_environments(schema, repo_path, state, mdata, _start_date
         ):
             deployment_environments = response.json()
             extraction_time = singer.utils.now()
-            for deployment_environment in deployment_environments["values"]:
+            for deployment_environment in deployment_environments.get("values", []):
                 deployment_environment["_sdc_repository"] = repo_path
                 deployment_environment["inserted_at"] = singer.utils.strftime(extraction_time)
                 with singer.Transformer() as transformer:
